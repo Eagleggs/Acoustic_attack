@@ -58,11 +58,11 @@ class Attention_CNN(nn.Module):
             nn.Conv2d(in_channels=2, out_channels=1, kernel_size=3,stride=2, padding_mode='zeros')
         )
         self.classification =nn.Sequential(
-            nn.Linear(t*k, 500, bias=True),
+            nn.Linear(k, 800, bias=True),
             nn.Sigmoid(),
             # nn.Linear(1000,500, bias=True),
             # nn.ReLU(),
-            nn.Linear(500,20)
+            nn.Linear(800,513)
         )
 
     def forward(self,x):
@@ -84,5 +84,6 @@ class Attention_CNN(nn.Module):
         x = self.layernorm(x)
 
         # Classification network
-        y = F.softmax(y, dim=1) #(b,k,4)
+        x = self.classification(x)
+        y = F.softmax(x, dim=2) #(b,k,4)
         return y
