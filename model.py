@@ -58,10 +58,9 @@ class Attention_CNN(nn.Module):
             nn.Conv2d(in_channels=2, out_channels=1, kernel_size=3,stride=2, padding_mode='zeros')
         )
         self.classification =nn.Sequential(
-            nn.Linear(k, 521, bias=True),
+            nn.Linear(k, 526, bias=True),
             nn.Sigmoid(),
         )
-
     def forward(self,x):
         # CNN feature extraction
         b, s, k, t = x.shape
