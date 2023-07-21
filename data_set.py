@@ -23,8 +23,8 @@ class PCMDataSet(Dataset):
                     key = row[1]  # Use the first value of the row as the key
                     hashtable[key] = row[0]  # Store the row number as the value
 
-        self.file_paths = [os.path.join(folder_path, file) for file in os.listdir(folder_path)]
-        self.labels = [self.get_label(file) for file in os.listdir(folder_path)]
+        self.file_paths = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.endswith(".wav")]
+        self.labels = [self.get_label(file) for file in os.listdir(folder_path) if file.endswith(".wav") ]
 
     def __len__(self):
         return len(self.file_paths)
@@ -38,14 +38,14 @@ class PCMDataSet(Dataset):
 
     def get_label(self, file):
         # Find the substring between "|m|" and ".wav"
-        start_index = file.find(" " or "|")  # Add len("|m|") to skip the "|m|" part
+        start_index = file.find("|")  # Add len("|m|") to skip the "|m|" part
         end_index = file.find(".wav")
 
         labels = file[start_index:end_index]
-        labels= labels.replace(" " or "|", "/")
+        labels= labels.replace("|", "/")
         # Split the substring into three parts using ","
         split_parts = labels.split(",")
-        label = torch.zeros(526)
+        label = torch.zeros(527)
         for l in split_parts:
             index = int(hashtable[l])
             label[index]= 1
