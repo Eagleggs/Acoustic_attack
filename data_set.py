@@ -38,11 +38,11 @@ class PCMDataSet(Dataset):
 
     def get_label(self, file):
         # Find the substring between "|m|" and ".wav"
-        start_index = file.find("|")  # Add len("|m|") to skip the "|m|" part
+        start_index = file.find(" ")  # Add len("|m|") to skip the "|m|" part
         end_index = file.find(".wav")
 
         labels = file[start_index:end_index]
-        labels= labels.replace("|", "/")
+        labels= labels.replace(" ", "/")
         # Split the substring into three parts using ","
         split_parts = labels.split(",")
         label = torch.zeros(527)

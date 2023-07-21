@@ -27,6 +27,7 @@ def wav_to_spec(input_wav_file):
         pcm_slices = np.array([pcm_data[i:i + slice_length] for i in range(0, len(pcm_data), slice_length)])
 
         freq, t, stft = signal.spectrogram(pcm_slices, fs=44100, mode='magnitude', nperseg=800, noverlap=100, nfft=1000)
+        np.save(input_wav_file[:-4], stft)
         # for i in range(0,10):
         #     plt.pcolormesh(t, freq, abs(stft[i]), shading='gouraud')
         #     plt.title('Spectrogramm using STFT amplitude')

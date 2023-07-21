@@ -66,7 +66,8 @@ def run(device,epochs=600, BATCH_SIZE=1):
     criterion = nn.BCELoss()
     optimizer = optim.Adam(params=model.parameters(), lr=1e-5, weight_decay=1e-3)
     lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda i: min(20/(i+1), 1.0))
-    dataset = PCMDataSet("../drive/MyDrive/audioset_train")
+    # dataset = PCMDataSet("../drive/MyDrive/audioset_train")
+    dataset = PCMDataSet("./dataset")
     train_size = int(0.8 * len(dataset))  # 90% for training
     test_size = len(dataset) - train_size  # Remaining 10% for testing
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
