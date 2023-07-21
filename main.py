@@ -10,7 +10,7 @@ from torch.utils.data import random_split
 from data_set import  PCMDataSet
 
 
-def train(train_iter, model, optimizer, lr_scheduler, criterion,GRADIENT_CLIPPING=1.0):
+def train(train_iter, model, optimizer, lr_scheduler, criterion,device,GRADIENT_CLIPPING=1.0):
     avg_loss = 0
     correct = 0
     total = 0
@@ -18,8 +18,8 @@ def train(train_iter, model, optimizer, lr_scheduler, criterion,GRADIENT_CLIPPIN
     # Iterate through batches
     for batch in tqdm(train_iter):
         inp, label = batch
-        inp = inp.to('cuda')
-        label = label.to('cuda')
+        inp = inp.to(device)
+        label = label.to(device)
         output = model(inp)
         # output = output.squeeze()
         loss = criterion(output, label)
@@ -39,14 +39,14 @@ def train(train_iter, model, optimizer, lr_scheduler, criterion,GRADIENT_CLIPPIN
     return avg_loss / len(train_iter), acc
 
 
-def test(test_iter, model):
+def test(test_iter, model,device):
     correct = 0
     total = 0
 
     for batch in tqdm(test_iter):
         inp, label = batch
-        inp = inp.to('cuda')
-        label = label.to('cuda')
+        inp = inp.to(device)
+        label = label.to(device)
         output = model(inp)
         predict = torch.where(output > 0.7, torch.tensor(1), torch.tensor(0))
         matching_ones = (predict == 1) & (label == 1)
@@ -60,9 +60,9 @@ def test(test_iter, model):
     return acc
 
 
-def run(epochs=600, BATCH_SIZE=1):
+def run(device,epochs=600, BATCH_SIZE=1):
     model = Attention_CNN(maximum_t=30, k=2975, heads=16)
-    model = model.to('cuda')
+    model = model.to(device)
     criterion = nn.BCELoss()
     optimizer = optim.Adam(params=model.parameters(), lr=1e-5, weight_decay=1e-3)
     lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda i: min(20/(i+1), 1.0))
@@ -103,8 +103,9 @@ def run(epochs=600, BATCH_SIZE=1):
                                       model,
                                       optimizer,
                                       lr_scheduler,
-                                      criterion)
-        test_acc = test(test_iter, model)
+                                      criterion,device)
+
+        test_acc = test(test_iter, model,device)
         print(f'\n training loss:{train_loss},training acc:{train_acc}')
         print(f'\nFinished.test acc:{test_acc}')
         if test_acc > best_test_acc:
@@ -121,6 +122,7 @@ def run(epochs=600, BATCH_SIZE=1):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    device = 'cpu'
     torch.cuda.empty_cache()
-    run()
+    run(device=device)
 
