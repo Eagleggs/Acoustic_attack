@@ -33,5 +33,5 @@ def wav_to_spec(input_wav_file):
         #     plt.ylabel('Frequency [Hz]')
         #     plt.xlabel('Time [seconds]')
         #     plt.show()
-        stft = torch.unsqueeze(torch.from_numpy(stft).float(), 0)
+        stft = torch.from_numpy(stft).float()
         return stft
