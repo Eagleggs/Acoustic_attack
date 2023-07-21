@@ -21,7 +21,7 @@ def train(train_iter, model, optimizer, lr_scheduler, criterion,GRADIENT_CLIPPIN
         inp = inp.to('cuda')
         label = label.to('cuda')
         output = model(inp)
-        output = output.squeeze()
+        # output = output.squeeze()
         loss = criterion(output, label)
         print(f"output:{output} ")
         loss.backward()
@@ -45,7 +45,7 @@ def test(test_iter, model):
         inp = inp.to('cuda')
         label = label.to('cuda')
         output = model(inp)
-        output = output.squeeze()
+        # output = output.squeeze()
 
         # predicted = torch.where(output > 0.7)
         # total += inp.size(0)
