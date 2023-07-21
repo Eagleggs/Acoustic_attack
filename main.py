@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data import random_split
 from data_set import  PCMDataSet
-
+from data_set import collate_variable_slice
 
 def train(train_iter, model, optimizer, lr_scheduler, criterion,GRADIENT_CLIPPING=1.0):
     avg_loss = 0
@@ -21,7 +21,7 @@ def train(train_iter, model, optimizer, lr_scheduler, criterion,GRADIENT_CLIPPIN
         inp = inp.to('cuda')
         label = label.to('cuda')
         output = model(inp)
-        output = output.squeeze()
+        # output = output.squeeze()
         loss = criterion(output, label)
         print(f"output:{output} ")
         loss.backward()
@@ -53,13 +53,14 @@ def test(test_iter, model):
     return 0
 
 
-def run(epochs=600, BATCH_SIZE=10):
+def run(epochs=600, BATCH_SIZE=1):
     model = Attention_CNN(maximum_t=30, k=2975, heads=16)
     model = model.to('cuda')
     criterion = nn.BCELoss()
     optimizer = optim.Adam(params=model.parameters(), lr=1e-5, weight_decay=1e-3)
     lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda i: min(20/(i+1), 1.0))
-    dataset = PCMDataSet("../drive/MyDrive/audioset_train")
+    # dataset = PCMDataSet("../drive/MyDrive/audioset_train")
+    dataset = PCMDataSet("./dataset")
     train_size = int(0.8 * len(dataset))  # 90% for training
     test_size = len(dataset) - train_size  # Remaining 10% for testing
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])

@@ -8,7 +8,20 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from scipy import signal
 import torch.nn.functional as F
+import random
+def collate_variable_slice(batch):
+    elem = batch[0]
+    out = None
+    if torch.utils.data.get_worker_info() is not None:
+        # If we're in a background process, concatenate directly into a
+        # shared memory tensor to avoid an extra copy
+        numel = sum(x.numel() for x in batch)
+        storage = elem._typed_storage()._new_shared(numel, device=elem.device)
+        out = elem.new(storage).resize_(len(batch), *list(elem.size()))
+    data = [item[0] for item in batch]
+    label = [item[1] for item in batch]
 
+    return (data,label)
 
 class PCMDataSet(Dataset):
     def __init__(self, folder_path):
@@ -50,7 +63,7 @@ class PCMDataSet(Dataset):
         # time_index = torch.arange(waveform.shape[0]).unsqueeze(1)
         # waveform = torch.cat((waveform, time_index), dim=1)
         # print(waveform)
-        return torch.rand(10,501,125), label
+        return torch.rand(random.randint(1, 30),501,125), label
 
     def get_label(self, file):
         o = torch.zeros(521)
