@@ -50,4 +50,3 @@ class PCMDataSet(Dataset):
             index = int(hashtable[l])
             label[index]= 1
         return label
-t = PCMDataSet("./dataset")
