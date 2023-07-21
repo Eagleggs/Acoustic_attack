@@ -30,10 +30,13 @@ def train(train_iter, model, optimizer, lr_scheduler, criterion,GRADIENT_CLIPPIN
 
         optimizer.step()
         lr_scheduler.step()
-
+        predict = torch.where(output > 0.7, torch.tensor(1), torch.tensor(0))
+        matching_ones = (predict == 1) & (label == 1)
+        matching_ones = matching_ones.sum().item()
+        acc = matching_ones / torch.sum(label) * 100
         # Keep track of loss and accuracy
         avg_loss += loss.item()
-    return avg_loss / len(train_iter), 0
+    return avg_loss / len(train_iter), acc
 
 
 def test(test_iter, model):
@@ -45,12 +48,16 @@ def test(test_iter, model):
         inp = inp.to('cuda')
         label = label.to('cuda')
         output = model(inp)
+        predict = torch.where(output > 0.7, torch.tensor(1), torch.tensor(0))
+        matching_ones = (predict == 1) & (label == 1)
+        matching_ones = matching_ones.sum().item()
+        acc = matching_ones / torch.sum(label) * 100
         # output = output.squeeze()
 
         # predicted = torch.where(output > 0.7)
         # total += inp.size(0)
         # correct += (predicted == torch.where(label > 0.7)).sum().item()
-    return 0
+    return acc
 
 
 def run(epochs=600, BATCH_SIZE=1):
