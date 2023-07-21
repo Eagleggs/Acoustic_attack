@@ -83,5 +83,5 @@ class Attention_CNN(nn.Module):
         # Classification network
         y = self.classification(x)
         y = torch.sum(y,dim=1)
-        y = y / 10
+        y = y / s
         return y
