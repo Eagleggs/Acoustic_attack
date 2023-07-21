@@ -53,7 +53,7 @@ def test(test_iter, model):
     return 0
 
 
-def run(epochs=600, BATCH_SIZE=10):
+def run(epochs=600, BATCH_SIZE=1):
     model = Attention_CNN(maximum_t=30, k=2975, heads=16)
     model = model.to('cuda')
     criterion = nn.BCELoss()
