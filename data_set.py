@@ -23,26 +23,33 @@ class PCMDataSet(Dataset):
                     key = row[1]  # Use the first value of the row as the key
                     hashtable[key] = row[0]  # Store the row number as the value
 
-        self.file_paths = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.endswith(".wav")]
-        self.labels = [self.get_label(file) for file in os.listdir(folder_path) if file.endswith(".wav") ]
+        self.file_paths = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.endswith(".npy")]
+        self.labels = [self.get_label(file) for file in os.listdir(folder_path) if file.endswith(".npy") ]
 
     def __len__(self):
         return len(self.file_paths)
 
     def __getitem__(self, index):
-        wav_path = self.file_paths[index]
+        npy_ptah = self.file_paths[index]
         label = self.labels[index]
-        spec = wav_to_spec(wav_path)
-
+        spec = torch.from_numpy(np.load(npy_ptah)).float()
         return spec, label
 
     def get_label(self, file):
         # Find the substring between "|m|" and ".wav"
-        start_index = file.find(" ")  # Add len("|m|") to skip the "|m|" part
-        end_index = file.find(".wav")
-
+        # file= file.replace("_m_", "/m/")
+        # file= file.replace("_g_", "/g/")
+        # file= file.replace("_t_", "/t/")
+        start_index = file.find("_ _") # Add len("|m|") to skip the "|m|" part
+        if start_index == -1:
+            start_index = file.find("_")
+        else:
+            start_index = start_index+2
+        end_index = file.find(".npy")
         labels = file[start_index:end_index]
-        labels= labels.replace(" ", "/")
+        labels= labels.replace("_m_", "/m/")
+        labels= labels.replace("_g_", "/g/")
+        labels= labels.replace("_t_", "/t/")
         # Split the substring into three parts using ","
         split_parts = labels.split(",")
         label = torch.zeros(527)

@@ -27,7 +27,7 @@ def wav_to_spec(input_wav_file):
         pcm_slices = np.array([pcm_data[i:i + slice_length] for i in range(0, len(pcm_data), slice_length)])
 
         freq, t, stft = signal.spectrogram(pcm_slices, fs=44100, mode='magnitude', nperseg=800, noverlap=100, nfft=1000)
-        np.save(input_wav_file[:-4], stft)
+        # np.save(input_wav_file[:-4], stft)
         # for i in range(0,10):
         #     plt.pcolormesh(t, freq, abs(stft[i]), shading='gouraud')
         #     plt.title('Spectrogramm using STFT amplitude')
@@ -36,3 +36,11 @@ def wav_to_spec(input_wav_file):
         #     plt.show()
         stft = torch.from_numpy(stft).float()
         return stft
+
+stft = wav_to_spec("./dataset/x6FbyqrK0g0_ m 026z9, m 04rlf, m 0l14gg, m 0l14qv, t dd00035.wav")
+stft2 = np.load("./dataset/x6FbyqrK0g0_ m 026z9, m 04rlf, m 0l14gg, m 0l14qv, t dd00035.npy")
+absolute_tolerance = 1e-6
+relative_tolerance = 1e-6
+
+# Check if the arrays are close to each other
+assert np.allclose(stft, stft2, rtol=relative_tolerance, atol=absolute_tolerance), "Arrays are not close to each other."

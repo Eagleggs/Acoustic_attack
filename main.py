@@ -21,9 +21,7 @@ def train(train_iter, model, optimizer, lr_scheduler, criterion,device,GRADIENT_
         inp = inp.to(device)
         label = label.to(device)
         output = model(inp)
-        # output = output.squeeze()
         loss = criterion(output, label)
-        print(f"output:{output} ")
         loss.backward()
         if GRADIENT_CLIPPING > 0.0:
             nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIPPING)
@@ -60,14 +58,14 @@ def test(test_iter, model,device):
     return acc
 
 
-def run(device,epochs=600, BATCH_SIZE=1):
-    model = Attention_CNN(maximum_t=30, k=2975, heads=16)
+def run(device,epochs=600, BATCH_SIZE=30):
+    model = Attention_CNN(maximum_t=30, k=708, heads=8)
     model = model.to(device)
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=1e-5, weight_decay=1e-3)
+    optimizer = optim.Adam(params=model.parameters(), lr=1e-4, weight_decay=1e-3)
     lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda i: min(20/(i+1), 1.0))
     # dataset = PCMDataSet("../drive/MyDrive/audioset_train")
-    dataset = PCMDataSet("./dataset")
+    dataset = PCMDataSet("/media/lu/B6AEFCF5AEFCAECD/dataset/audioset_train")
     train_size = int(0.8 * len(dataset))  # 90% for training
     test_size = len(dataset) - train_size  # Remaining 10% for testing
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
@@ -123,7 +121,7 @@ def run(device,epochs=600, BATCH_SIZE=1):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    device = 'cpu'
+    device = 'cuda'
     torch.cuda.empty_cache()
     run(device=device)
 

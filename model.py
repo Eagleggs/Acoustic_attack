@@ -47,7 +47,7 @@ class Attention_CNN(nn.Module):
         self.layernorm = nn.LayerNorm(k)
         self.do = nn.Dropout(0.2)
         self.feature_extraction = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=13,stride=1, padding_mode='zeros'),
+            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=7,stride=1, padding_mode='zeros'),
             nn.ReLU(),
             nn.Conv2d(in_channels=16, out_channels=8, kernel_size=9,stride=1, padding_mode='zeros'),
             nn.ReLU(),
@@ -55,7 +55,9 @@ class Attention_CNN(nn.Module):
             nn.ReLU(),
             nn.Conv2d(in_channels=4, out_channels=2, kernel_size=3,stride=2, padding_mode='zeros'),
             nn.ReLU(),
-            nn.Conv2d(in_channels=2, out_channels=1, kernel_size=3,stride=2, padding_mode='zeros')
+            nn.Conv2d(in_channels=2, out_channels=2, kernel_size=3,stride=2, padding_mode='zeros'),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=2, out_channels=1, kernel_size=3, stride=2, padding_mode='zeros')
         )
         self.classification =nn.Sequential(
             nn.Linear(k, 527, bias=True),
