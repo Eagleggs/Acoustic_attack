@@ -23,8 +23,8 @@ class PCMDataSet(Dataset):
                     key = row[1]  # Use the first value of the row as the key
                     hashtable[key] = row[0]  # Store the row number as the value
 
-        self.file_paths = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.endswith(".npy")]
-        self.labels = [self.get_label(file) for file in os.listdir(folder_path) if file.endswith(".npy") ]
+        self.file_paths = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if (file.endswith(".npy") and ("07qrkrw" in file or "07rpkh9" in file))]
+        self.labels = [self.get_label(file) for file in os.listdir(folder_path) if (file.endswith(".npy") and ("07qrkrw" in file or "07rpkh9" in file)) ]
 
     def __len__(self):
         return len(self.file_paths)
@@ -32,6 +32,7 @@ class PCMDataSet(Dataset):
     def __getitem__(self, index):
         npy_ptah = self.file_paths[index]
         label = self.labels[index]
+        # label = torch.ones(527)
         spec = torch.from_numpy(np.load(npy_ptah)).float()
         return spec, label
 
@@ -53,7 +54,11 @@ class PCMDataSet(Dataset):
         # Split the substring into three parts using ","
         split_parts = labels.split(",")
         label = torch.zeros(527)
+        # a = np.zeros(527)
         for l in split_parts:
             index = int(hashtable[l])
-            label[index]= 1
+            label[index] = 1
+            # for i in range(527):
+            #     a[i] = np.exp(-0.5 * ((i - index) / 5) ** 2)
+            # label += torch.from_numpy(a)
         return label

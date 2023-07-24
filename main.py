@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from model import Attention_CNN
 from wav_2_spec import wav_to_spec
@@ -8,7 +9,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data import random_split
 from data_set import  PCMDataSet
-
+from loss import cosine_similarity_loss
 
 def train(train_iter, model, optimizer, lr_scheduler, criterion,device,GRADIENT_CLIPPING=1.0):
     avg_loss = 0
@@ -22,19 +23,39 @@ def train(train_iter, model, optimizer, lr_scheduler, criterion,device,GRADIENT_
         label = label.to(device)
         output = model(inp)
         loss = criterion(output, label)
+        loss += cosine_similarity_loss(output,label)
         loss.backward()
         if GRADIENT_CLIPPING > 0.0:
             nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIPPING)
 
         optimizer.step()
         lr_scheduler.step()
-        predict = torch.where(output > 0.7, torch.tensor(1), torch.tensor(0))
-        matching_ones = (predict == 1) & (label == 1)
-        matching_ones = matching_ones.sum().item()
-        acc = matching_ones / torch.sum(label) * 100
+        dot_product = torch.dot(output.flatten(), label.flatten())
+        norm1 = torch.linalg.norm(output)
+        norm2 = torch.linalg.norm(label)
+
+        acc = dot_product / (norm1 * norm2) * 100
+        # acc =torch.cosine_similarity(torch.zeros(30,30),torch.ones(30,30))
+        # predict = torch.where(output < 0.1, torch.tensor(0), torch.tensor(1))
+        # matching_ones = (predict == 1) & (label == 1)
+        # matching_ones = matching_ones.sum().item()
+        # acc = matching_ones / torch.sum(label) * 100
+        # flat_tensor1 = predict.flatten().int()
+        # flat_tensor2 = label.flatten().int()
+        # # Calculate the intersection (common elements where both tensors have 1s)
+        # intersection = sum(flat_tensor1 & flat_tensor2)
+        #
+        # # Calculate the union (total unique positions where at least one tensor has 1)
+        # union = sum(flat_tensor1 | flat_tensor2)
+        #
+        # # Calculate the Jaccard similarity coefficient
+        # similarity = intersection / union * 100
+
         # Keep track of loss and accuracy
         avg_loss += loss.item()
-    return avg_loss / len(train_iter), acc
+        print(f"loss:{loss.item()},similarity:{acc.item()}")
+        # print(f"\n {output}")
+    return avg_loss / len(train_iter), acc.item()
 
 
 def test(test_iter, model,device):
@@ -46,47 +67,52 @@ def test(test_iter, model,device):
         inp = inp.to(device)
         label = label.to(device)
         output = model(inp)
-        predict = torch.where(output > 0.7, torch.tensor(1), torch.tensor(0))
-        matching_ones = (predict == 1) & (label == 1)
-        matching_ones = matching_ones.sum().item()
-        acc = matching_ones / torch.sum(label) * 100
+        output = torch.where(output>0.6,torch.tensor(1).float(),torch.tensor(0).float())
+        print(output)
+        dot_product = torch.dot(output.flatten(), label.flatten())
+        norm1 = torch.linalg.norm(output)
+        norm2 = torch.linalg.norm(label)
+
+        acc = dot_product / (norm1 * norm2) * 100
+        # predict = torch.where(output > 0.1, torch.tensor(1), torch.tensor(0))
+        # matching_ones = (predict == 1) & (label == 1)
+        # matching_ones = matching_ones.sum().item()
+        # acc = matching_ones / torch.sum(label) * 100
+        # flat_tensor1 = predict.flatten().int()
+        # flat_tensor2 = label.flatten().int()
+        # # Calculate the intersection (common elements where both tensors have 1s)
+        # intersection = sum(flat_tensor1 & flat_tensor2)
+        #
+        # # Calculate the union (total unique positions where at least one tensor has 1)
+        # union = sum(flat_tensor1 | flat_tensor2)
+        #
+        # # Calculate the Jaccard similarity coefficient
+        # similarity = intersection / union
+
+        # Keep track of loss and accuracy
+        print(f"acc:{acc}")
         # output = output.squeeze()
 
         # predicted = torch.where(output > 0.7)
         # total += inp.size(0)
+
+
         # correct += (predicted == torch.where(label > 0.7)).sum().item()
-    return acc
+    return acc.item()
 
 
-def run(device,epochs=600, BATCH_SIZE=30):
-    model = Attention_CNN(maximum_t=30, k=708, heads=8)
+def run(device,epochs=600, BATCH_SIZE=10):
+    model = Attention_CNN(maximum_t=30, k=1024, heads=4)
     model = model.to(device)
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=1e-4, weight_decay=1e-3)
-    lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda i: min(20/(i+1), 1.0))
+    optimizer = optim.Adam(params=model.parameters(), lr=4e-4, weight_decay=1e-3)
+    lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda i: min(30/(i+1), 1.0))
     # dataset = PCMDataSet("../drive/MyDrive/audioset_train")
     dataset = PCMDataSet("/media/lu/B6AEFCF5AEFCAECD/dataset/audioset_train")
-    train_size = int(0.8 * len(dataset))  # 90% for training
+    train_size = int(0.99 * len(dataset))  # 90% for training
     test_size = len(dataset) - train_size  # Remaining 10% for testing
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
-
-    # test_dataset_list = list(test_dataset)
-    # train_dataset_list = list(train_dataset)
-    # num_test_data = len(test_dataset_list)
-    # num_train_data = len(train_dataset_list)
-    # # # Print the number of data points in the test set
-    # print("Number of data points in the test set:", num_test_data)
-    # print("Number of data points in the train set:", num_train_data)
-    # train_dataset = PCMDataSet('all_data')
-    # test_dataset = PCMDataSet('all_eval')
-    # test_dataset_list = list(test_dataset)
-    # train_dataset_list = list(train_dataset)
-    # num_test_data = len(test_dataset_list)
-    # num_train_data = len(train_dataset_list)
-    # # Print the number of data points in the test set
-    # print("Number of data points in the test set:", num_test_data)
-    # print("Number of data points in the train set:", num_train_data)
 
     train_iter = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     test_iter = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)

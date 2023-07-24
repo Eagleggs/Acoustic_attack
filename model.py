@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch
-
+from Yamnet import YAMNet
 # Use multi-head attention to encode the frequency knowledge in the spectrogram
 class MultiHeadSelfAttention(nn.Module):
     def __init__(self, k, heads=8):
@@ -46,21 +46,13 @@ class Attention_CNN(nn.Module):
         self.attentionlayer = MultiHeadSelfAttention(k, heads=heads)
         self.layernorm = nn.LayerNorm(k)
         self.do = nn.Dropout(0.2)
-        self.feature_extraction = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=7,stride=1, padding_mode='zeros'),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=16, out_channels=8, kernel_size=9,stride=1, padding_mode='zeros'),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=8, out_channels=4, kernel_size=3,stride=1, padding_mode='zeros'),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=4, out_channels=2, kernel_size=3,stride=2, padding_mode='zeros'),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=2, out_channels=2, kernel_size=3,stride=2, padding_mode='zeros'),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=2, out_channels=1, kernel_size=3, stride=2, padding_mode='zeros')
-        )
+        self.feature_extraction = YAMNet()
         self.classification =nn.Sequential(
-            nn.Linear(k, 527, bias=True),
+            nn.Linear(k, 1000, bias=True),
+            nn.ReLU(),
+            nn.Linear(1000,527),
+            nn.ReLU(),
+            nn.Linear(527, 527),
             nn.Sigmoid(),
         )
     def forward(self,x):
@@ -68,14 +60,14 @@ class Attention_CNN(nn.Module):
         b, s, k, t = x.shape
         slices = torch.chunk(x, chunks=s, dim=1)
         extracted_slices = [self.feature_extraction(chunk) for chunk in slices]
-        extracted_slices = torch.cat(extracted_slices,dim=1)
-        extracted_features = torch.flatten(extracted_slices,start_dim=2)
+        extracted_features = torch.cat(extracted_slices,dim=1)
+        # extracted_features = torch.flatten(extracted_slices,start_dim=2)
         batch,slice,feature = extracted_features.shape
 
         # Attention mechanism
-        p = torch.arange(self.maximum_t, device=x.device).view(1, self.maximum_t).expand(b, self.maximum_t) # positional embedding
-        p = self.position(p)
-        x = extracted_features + p[:,:slice,:]
+        # p = torch.arange(self.maximum_t, device=x.device).view(1, self.maximum_t).expand(b, self.maximum_t) # positional embedding
+        # p = self.position(p)
+        x = extracted_features
         y = self.attentionlayer(x)
         x = x + y
         x = self.do(x)
@@ -83,6 +75,6 @@ class Attention_CNN(nn.Module):
 
         # Classification network
         y = self.classification(x)
-        y = torch.sum(y,dim=1)
-        y = y / s
+        y = torch.mean(y,dim=1)
+        # y = y / s
         return y
